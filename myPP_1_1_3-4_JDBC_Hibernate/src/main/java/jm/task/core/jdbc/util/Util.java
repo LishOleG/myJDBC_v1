@@ -1,11 +1,11 @@
 package jm.task.core.jdbc.util;
 
+import jm.task.core.jdbc.dao.UserDaoJDBCImpl;
 import org.w3c.dom.ls.LSOutput;
 
 import java.sql.*;
 
 public class Util {
-    // реализуйте настройку соеденения с БД
 
     private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
     private static final String URL = "jdbc:mysql://localhost:3306/mydbtest";
@@ -18,12 +18,13 @@ public class Util {
         try {
             Class.forName(DB_DRIVER);
             connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            System.out.println("It's OK connection");
+            System.out.println("It's OK connection from Util");
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
             System.out.println("It's ERROR connection");
         }
         return connection;
     }
+
 }
 

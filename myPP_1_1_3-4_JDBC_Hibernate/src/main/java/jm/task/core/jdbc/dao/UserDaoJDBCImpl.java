@@ -10,17 +10,20 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserDaoJDBCImpl extends UserServiceImpl implements UserDao {
+import static java.time.chrono.HijrahChronology.INSTANCE;
 
-    private static final UserDaoJDBCImpl INSTANCE = new UserDaoJDBCImpl();
+public class UserDaoJDBCImpl extends Util implements UserDao {
+
+    private final Util INSTANCE = new Util();
+
     private static final Connection conn;
 
     static {
         conn = Util.getConnection();
-        System.out.println("...connection it's OK!");
+        System.out.println("connection from UD_JDBCImpl ..it's OK!");
     }
 
-    public static UserDaoJDBCImpl getInstance() {
+    public  Util getInstance() {
         return INSTANCE;
     }
 
@@ -30,23 +33,27 @@ public class UserDaoJDBCImpl extends UserServiceImpl implements UserDao {
     @Override
     public void createUsersTable() {
         String mySQL = """
-        CREATE TABLE IF NOT EXISTS `mydbtest`.`users` (
-          `id` INT(11) NOT NULL AUTO_INCREMENT,
-          `name` VARCHAR(45) NOT NULL,
-          `lastName` VARCHAR(45) NOT NULL,
-          `age` INT(3) NOT NULL,
-          PRIMARY KEY (`id`))
-        ENGINE = InnoDB 
-        DEFAULT CHARACTER SET = utf8;""";
+                CREATE TABLE IF NOT EXISTS `mydbtest`.`users` (
+                  `id` INT(11) NOT NULL AUTO_INCREMENT,
+                  `name` VARCHAR(45) NOT NULL,
+                  `lastName` VARCHAR(45) NOT NULL,
+                  `age` INT(3) NOT NULL,
+                  PRIMARY KEY (`id`))
+                ENGINE = InnoDB 
+                DEFAULT CHARACTER SET = utf8;""";
 
-        try {
+        try (PreparedStatement state = conn.prepareStatement(mySQL)) {
+            conn.setAutoCommit(false);
+            state.executeUpdate();
+            conn.commit();
 
-            PreparedStatement state = conn.prepareStatement(mySQL);
-            {
-                state.executeUpdate();
-            }
         } catch (SQLException e) {
             e.printStackTrace();
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -55,11 +62,17 @@ public class UserDaoJDBCImpl extends UserServiceImpl implements UserDao {
         String mySQL = "TRUNCATE TABLE USERS";
 
         try (Statement state = conn.createStatement()) {
-
+            conn.setAutoCommit(false);
             state.executeUpdate(mySQL);
+            conn.commit();
 
         } catch (SQLException e) {
             e.printStackTrace();
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -67,17 +80,23 @@ public class UserDaoJDBCImpl extends UserServiceImpl implements UserDao {
     public void saveUser(String name, String lastName, byte age) {
 
         String mySQL = "INSERT INTO USERS (name, lastName, age) VALUES (?, ?, ?)";
-        //User user = new User();
 
         try (PreparedStatement state = conn.prepareStatement(mySQL)) {
             state.setString(1, name);
             state.setString(2, lastName);
             state.setByte(3, Byte.parseByte(String.valueOf(age)));
-
+            conn.setAutoCommit(false);
             state.executeUpdate();
             System.out.println("User с именем — " + name + " добавлен в базу данных");
+            conn.commit();
+
         } catch (SQLException e) {
             e.printStackTrace();
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -86,15 +105,21 @@ public class UserDaoJDBCImpl extends UserServiceImpl implements UserDao {
 
         String mySQL = "DELETE FROM USERS WHERE ID=?";
 
-        //User users = new User();
-
         try (PreparedStatement state = conn.prepareStatement(mySQL)) {
             state.setLong(1, id);
+
+            conn.setAutoCommit(false);
             state.executeUpdate();
             System.out.println("User " + id + " удален из таблицы.");
+            conn.commit();
 
         } catch (SQLException e) {
             e.printStackTrace();
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -105,6 +130,7 @@ public class UserDaoJDBCImpl extends UserServiceImpl implements UserDao {
         String mySQL = "SELECT  id, name, lastName, age FROM USERS ";
 
         try (Statement statement = conn.createStatement()) {
+            conn.setAutoCommit(false);
             ResultSet resultSet = statement.executeQuery(mySQL);
 
             while (resultSet.next()) {
@@ -115,28 +141,44 @@ public class UserDaoJDBCImpl extends UserServiceImpl implements UserDao {
                 user.setAge(resultSet.getByte("AGE"));
 
                 userList.add(user);
+                conn.commit();
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-        for (User users : userList) {
-            System.out.println("инфо строка из БД таблицы о: " + users);
+
+            for (User users : userList) {
+                System.out.println("инфо строка из БД таблицы о: " + users);
+            }
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+
         }
         return userList;
     }
 
 
-    @Override
-    public void cleanUsersTable() {
 
-        String mySQL = "DELETE FROM USERS";
+        @Override
+        public void cleanUsersTable () {
 
-        try (Statement statement = conn.createStatement()) {
-            statement.executeUpdate(mySQL);
+            String mySQL = "DELETE FROM USERS";
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+            try (Statement statement = conn.createStatement()) {
+                conn.setAutoCommit(false);
+                statement.executeUpdate(mySQL);
+                conn.commit();
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         }
     }
-}
