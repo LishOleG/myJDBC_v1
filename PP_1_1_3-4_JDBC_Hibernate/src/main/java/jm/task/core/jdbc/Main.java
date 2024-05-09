@@ -15,23 +15,23 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) throws SQLException {
 
-        //UserService myUD_JDBC = new UserServiceImpl();
+
         UserService UD_Hibernate = new UserServiceImpl();
-        //Util.getSessionFactory();
+
 
         UD_Hibernate.createUsersTable();
 
-        UD_Hibernate.saveUser("Oleg", "Lish",(byte)34);
+        UD_Hibernate.saveUser("Olga", "Lish", (byte) 34);
         UD_Hibernate.saveUser("Adam", "Lish", (byte) 12);
-        UD_Hibernate.saveUser("Alice", "Lishtayeva", (byte) 8);
-        UD_Hibernate.saveUser("Danya", "Lishtayev", (byte) 5);
+        UD_Hibernate.saveUser("Alice", "Lish", (byte) 8);
+        UD_Hibernate.saveUser("Danya", "Lish", (byte) 5);
 
         UD_Hibernate.removeUserById(1);
 
         UD_Hibernate.getAllUsers();
 
         UD_Hibernate.cleanUsersTable();
-        //UD_Hibernate.dropUsersTable();
+        UD_Hibernate.dropUsersTable();
 
 
     }

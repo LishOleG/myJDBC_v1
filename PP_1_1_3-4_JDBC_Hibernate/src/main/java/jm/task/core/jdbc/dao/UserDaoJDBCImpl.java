@@ -23,7 +23,7 @@ public class UserDaoJDBCImpl extends Util implements UserDao {
         System.out.println("connection from UD_JDBCImpl ..it's OK!");
     }
 
-    public  Util getInstance() {
+    public Util getInstance() {
         return INSTANCE;
     }
 
@@ -33,7 +33,7 @@ public class UserDaoJDBCImpl extends Util implements UserDao {
     @Override
     public void createUsersTable() {
         String mySQL = """
-                CREATE TABLE IF NOT EXISTS `mydbtest`.`users` (
+                CREATE TABLE IF NOT EXISTS `mydbtest`.`user` (
                   `id` INT(11) NOT NULL AUTO_INCREMENT,
                   `name` VARCHAR(45) NOT NULL,
                   `lastName` VARCHAR(45) NOT NULL,
@@ -59,7 +59,7 @@ public class UserDaoJDBCImpl extends Util implements UserDao {
 
     @Override
     public void dropUsersTable() {
-        String mySQL = "TRUNCATE TABLE USERS";
+        String mySQL = "TRUNCATE TABLE USER";
 
         try (Statement state = conn.createStatement()) {
             conn.setAutoCommit(false);
@@ -79,7 +79,7 @@ public class UserDaoJDBCImpl extends Util implements UserDao {
     @Override
     public void saveUser(String name, String lastName, byte age) {
 
-        String mySQL = "INSERT INTO USERS (name, lastName, age) VALUES (?, ?, ?)";
+        String mySQL = "INSERT INTO USER (name, lastName, age) VALUES (?, ?, ?)";
 
         try (PreparedStatement state = conn.prepareStatement(mySQL)) {
             state.setString(1, name);
@@ -103,7 +103,7 @@ public class UserDaoJDBCImpl extends Util implements UserDao {
     @Override
     public void removeUserById(long id) {
 
-        String mySQL = "DELETE FROM USERS WHERE ID=?";
+        String mySQL = "DELETE FROM USER WHERE ID=?";
 
         try (PreparedStatement state = conn.prepareStatement(mySQL)) {
             state.setLong(1, id);
@@ -127,7 +127,7 @@ public class UserDaoJDBCImpl extends Util implements UserDao {
     public List<User> getAllUsers() {
         List<User> userList = new ArrayList<>();
 
-        String mySQL = "SELECT  id, name, lastName, age FROM USERS ";
+        String mySQL = "SELECT  id, name, lastName, age FROM USER ";
 
         try (Statement statement = conn.createStatement()) {
             conn.setAutoCommit(false);
@@ -161,24 +161,23 @@ public class UserDaoJDBCImpl extends Util implements UserDao {
     }
 
 
+    @Override
+    public void cleanUsersTable() {
 
-        @Override
-        public void cleanUsersTable () {
+        String mySQL = "DELETE FROM USER";
 
-            String mySQL = "DELETE FROM USERS";
+        try (Statement statement = conn.createStatement()) {
+            conn.setAutoCommit(false);
+            statement.executeUpdate(mySQL);
+            conn.commit();
 
-            try (Statement statement = conn.createStatement()) {
-                conn.setAutoCommit(false);
-                statement.executeUpdate(mySQL);
-                conn.commit();
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
             }
         }
     }
+}

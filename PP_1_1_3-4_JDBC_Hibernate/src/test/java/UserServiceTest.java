@@ -83,8 +83,6 @@ public class UserServiceTest {
         }
     }
 
-
-
     @Test
     public void cleanUsersTable() {
         try {

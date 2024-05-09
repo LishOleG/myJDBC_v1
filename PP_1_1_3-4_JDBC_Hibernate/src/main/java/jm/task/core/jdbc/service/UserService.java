@@ -8,7 +8,7 @@ import java.util.List;
 public interface UserService {
     void createUsersTable() throws SQLException;
 
-    void dropUsersTable()throws SQLException;
+    void dropUsersTable() throws SQLException;
 
     void saveUser(String name, String lastName, byte age) throws SQLException;
 

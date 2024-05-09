@@ -18,7 +18,6 @@ import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
     public UserDaoHibernateImpl() {
-
     }
 
 
@@ -28,16 +27,16 @@ public class UserDaoHibernateImpl implements UserDao {
             Transaction transaction = session.beginTransaction();
 
             session.createSQLQuery("CREATE TABLE IF NOT EXISTS User " +
-                            "id INT NOT NULL AUTO_INCREMENT, " +
-                            "name VARCHAR(45) NOT NULL, " +
-                            "lastName VARCHAR(45) NOT NULL, " +
-                            "age TINYINT NOT NULL, " +
-                            "PRIMARY KEY (id));")
+                    "id INT NOT NULL AUTO_INCREMENT, " +
+                    "name VARCHAR(45) NOT NULL, " +
+                    "lastName VARCHAR(45) NOT NULL, " +
+                    "age TINYINT NOT NULL, " +
+                    "PRIMARY KEY (id));")
                     .addEntity(User.class);
-                    //.executeUpdate();
 
             transaction.commit();
-        } catch (HibernateException e) {
+        } catch (Exception e) {
+            System.err.println("Ошибка при создании таблицы: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -46,38 +45,32 @@ public class UserDaoHibernateImpl implements UserDao {
     public void dropUsersTable() {
         try (Session session = Util.getSessionFactory().openSession()) {
             Transaction transaction = session.beginTransaction();
-            session.createSQLQuery("DROP TABLE IF EXISTS User")
-                    .addEntity(User.class)
-                    .executeUpdate();
-
+            session.createNativeQuery("DELETE FROM User").executeUpdate();
             transaction.commit();
         } catch (Exception e) {
+            System.err.println("Ошибка при удалении таблицы: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Transaction transaction = null;
         try (Session session = Util.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            //String user = "INSERT INTO USERS (name, lastName, Byte.parseByte(String.valueOf(age))) VALUES (?, ?, ?)";
-            User user = new User(name, lastName, Byte.parseByte(String.valueOf(age)));
-            session.save(user);
-            System.out.println(user);
+            Transaction transaction = session.beginTransaction();
+            try {
+                User user = new User(name, lastName, age);
+                session.save(user);
+                transaction.commit();
+            } catch (Exception e) {
+                if (transaction != null) {
+                    transaction.rollback();
+                }
 
-            transaction.commit();
-
-        } catch (Exception e) {
-            // Откат транзакции в случае исключения
-            if (transaction != null) {
-                transaction.rollback();
+                System.err.println("Ошибка при сохранении пользователя: " + e.getMessage());
+                e.printStackTrace();
             }
-            e.printStackTrace();
         }
     }
-
 
     @Override
     public void removeUserById(long id) {
@@ -89,56 +82,40 @@ public class UserDaoHibernateImpl implements UserDao {
             }
             transaction.commit();
         } catch (Exception e) {
-            // Логирование исключения
+
             System.err.println("Ошибка при удалении пользователя: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-
     @Override
     public List<User> getAllUsers() {
-        Transaction transaction = null;
-        List<User> userList = null;
         try (Session session = Util.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            // Получаем список пользователей из базы данных
-            /*
-            String SQL = "FROM User";
-            Query query = session.createQuery(SQL);
-            List<User> users = query.list();
-             */
-            userList = session
-                    .createQuery("FROM User", User.class)
-                    .getResultList();
-            // Возвращаем пустой список, если результат равен null
-            //if (userList == null) {
-            //return Collections.emptyList();
-            transaction.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return userList;
-    }
 
+            List<User> users = session.createQuery("FROM User", User.class).getResultList();
+
+            if (users == null) {
+                return Collections.emptyList();
+            }
+
+            return users;
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при получении списка пользователей из БД ", e);
+        }
+    }
 
     @Override
     public void cleanUsersTable() {
-        Transaction transaction = null;
         try (Session session = Util.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            session.createQuery("DELETE FROM User")
-                    .executeUpdate();
+            Transaction transaction = session.beginTransaction();
+            session.createNativeQuery("DELETE FROM user").executeUpdate();
             transaction.commit();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void close() {
-        // Закрываем фабрику сессий
         Util.close();
     }
 }
-

@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Table (name= "Users")
+@Table(name = "User")
 public class User {
 
     @Id
@@ -23,7 +23,8 @@ public class User {
     private byte age;
 
 
-    public User() {}
+    public User() {
+    }
 
     public User(String name, String lastName, byte age) {
         this.name = name;
